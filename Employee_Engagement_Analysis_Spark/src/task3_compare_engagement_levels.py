@@ -2,6 +2,7 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when, avg, round as spark_round
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, BooleanType
 
 def initialize_spark(app_name="Task3_Compare_Engagement_Levels"):
     """
@@ -23,6 +24,7 @@ def load_data(spark, file_path):
     Returns:
         DataFrame: Spark DataFrame containing employee data.
     """
+    # You can also use a StructType schema if desired.
     schema = "EmployeeID INT, Department STRING, JobTitle STRING, SatisfactionRating INT, EngagementLevel STRING, ReportsConcerns BOOLEAN, ProvidedSuggestions BOOLEAN"
     
     df = spark.read.csv(file_path, header=True, schema=schema)
@@ -38,13 +40,14 @@ def map_engagement_level(df):
     Returns:
         DataFrame: DataFrame with an additional column for numerical EngagementScore.
     """
-    # TODO: Implement mapping of EngagementLevel to numerical values
-    # Example:
-    # 'Low' -> 1
-    # 'Medium' -> 2
-    # 'High' -> 3
-
-    pass  # Remove this line after implementing the function
+    # Mapping:
+    # 'Low' -> 1, 'Medium' -> 2, 'High' -> 3
+    df_with_score = df.withColumn("EngagementScore", 
+                                  when(col("EngagementLevel") == "Low", 1)
+                                  .when(col("EngagementLevel") == "Medium", 2)
+                                  .when(col("EngagementLevel") == "High", 3)
+                                  .otherwise(0))
+    return df_with_score
 
 def compare_engagement_levels(df):
     """
@@ -54,16 +57,11 @@ def compare_engagement_levels(df):
         df (DataFrame): Spark DataFrame containing employee data with numerical EngagementScore.
 
     Returns:
-        DataFrame: DataFrame containing JobTitle and their average EngagementLevel.
+        DataFrame: DataFrame containing JobTitle and their average EngagementScore.
     """
-    # TODO: Implement Task 3
-    # Steps:
-    # 1. Map EngagementLevel to numerical values.
-    # 2. Group by JobTitle and calculate average EngagementScore.
-    # 3. Round the average to two decimal places.
-    # 4. Return the result DataFrame.
-
-    pass  # Remove this line after implementing the function
+    # Group by JobTitle, calculate the average EngagementScore, and round the result to two decimal places.
+    result_df = df.groupBy("JobTitle").agg(spark_round(avg("EngagementScore"), 2).alias("AvgEngagementScore"))
+    return result_df
 
 def write_output(result_df, output_path):
     """
@@ -86,14 +84,16 @@ def main():
     spark = initialize_spark()
     
     # Define file paths
-    input_file = "/workspaces/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
-    output_file = "/workspaces/Employee_Engagement_Analysis_Spark/outputs/task3/engagement_levels_job_titles.csv"
+    input_file = "/workspaces/spark-structured-api-employee-engagement-analysis-pavandantu18/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
+    output_file = "/workspaces/spark-structured-api-employee-engagement-analysis-pavandantu18/Employee_Engagement_Analysis_Spark/outputs/task3/engagement_levels_job_titles.csv"
     
     # Load data
     df = load_data(spark, input_file)
     
-    # Perform Task 3
+    # Map EngagementLevel to a numerical EngagementScore
     df_mapped = map_engagement_level(df)
+    
+    # Compare engagement levels across job titles
     result_df = compare_engagement_levels(df_mapped)
     
     # Write the result to CSV

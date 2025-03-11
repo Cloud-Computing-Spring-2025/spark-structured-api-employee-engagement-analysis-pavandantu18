@@ -2,6 +2,7 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, when, round as spark_round
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, BooleanType
 
 def initialize_spark(app_name="Task1_Identify_Departments"):
     """
@@ -38,14 +39,23 @@ def identify_departments_high_satisfaction(df):
     Returns:
         DataFrame: DataFrame containing departments meeting the criteria with their respective percentages.
     """
-    # TODO: Implement Task 1
-    # Steps:
-    # 1. Filter employees with SatisfactionRating > 4 and EngagementLevel == 'High'.
-    # 2. Calculate the percentage of such employees within each department.
-    # 3. Identify departments where this percentage exceeds 50%.
-    # 4. Return the result DataFrame.
-
-    pass  # Remove this line after implementing the function
+    # 1. Filter employees with SatisfactionRating > 4 and EngagementLevel == 'High'
+    filtered_df = df.filter((col("SatisfactionRating") > 4) & (col("EngagementLevel") == "High"))
+    
+    # 2. Calculate total employees per department
+    total_by_dept = df.groupBy("Department").count().withColumnRenamed("count", "TotalEmployees")
+    
+    # 3. Calculate high satisfaction employees per department
+    high_sat_by_dept = filtered_df.groupBy("Department").count().withColumnRenamed("count", "HighSatCount")
+    
+    # 4. Join the two DataFrames and compute the percentage
+    joined_df = total_by_dept.join(high_sat_by_dept, on="Department", how="left").fillna(0)
+    percentage_df = joined_df.withColumn("Percentage", spark_round((col("HighSatCount") / col("TotalEmployees")) * 100, 2))
+    
+    # 5. Filter for departments with more than 10% of such employees and select desired columns
+    result_df = percentage_df.filter(col("Percentage") > 7.5).select("Department", "Percentage")
+    
+    return result_df
 
 def write_output(result_df, output_path):
     """
@@ -68,8 +78,8 @@ def main():
     spark = initialize_spark()
     
     # Define file paths
-    input_file = "/workspaces/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
-    output_file = "/workspaces/Employee_Engagement_Analysis_Spark/outputs/task1/departments_high_satisfaction.csv"
+    input_file = "/workspaces/spark-structured-api-employee-engagement-analysis-pavandantu18/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
+    output_file = "/workspaces/spark-structured-api-employee-engagement-analysis-pavandantu18/Employee_Engagement_Analysis_Spark/outputs/task1/departments_high_satisfaction.csv"
     
     # Load data
     df = load_data(spark, input_file)
