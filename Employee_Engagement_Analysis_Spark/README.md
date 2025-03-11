@@ -250,4 +250,86 @@ A comparative analysis showing average Engagement Levels across Job Titles, high
 
 ---
 
+# Employee Engagement Analysis Assignment
+
+## Overview
+This assignment leverages Apache Spark's Structured APIs to analyze an employee dataset and derive actionable insights. The analysis is divided into three primary tasks:
+
+1. **Identify Departments with High Satisfaction and Engagement**
+2. **Identify Employees Who Feel Valued but Didn’t Suggest Improvements**
+3. **Compare Engagement Levels Across Job Titles**
+
+Each task is implemented in a separate Python script located in the `src/` directory. The following sections explain the logic and structure of the code for each task.
+
+---
+
+## Task 1: Identify Departments with High Satisfaction and Engagement
+
+**Script:** `src/task1_identify_departments_high_satisfaction.py`
+
+### Code Explanation:
+- **initialize_spark:**  
+  - This function creates and returns a SparkSession, which is the entry point for executing Spark operations.
+- **load_data:**  
+  - Reads the `employee_data.csv` file using a predefined schema. The schema specifies data types for columns like `EmployeeID`, `Department`, `JobTitle`, `SatisfactionRating`, `EngagementLevel`, `ReportsConcerns`, and `ProvidedSuggestions`. This ensures that data is parsed correctly.
+- **identify_departments_high_satisfaction:**  
+  - **Step 1:** Filters the dataset to select employees with a `SatisfactionRating` greater than 4 and an `EngagementLevel` equal to "High".
+  - **Step 2:** Groups the full dataset by `Department` to compute the total number of employees per department.
+  - **Step 3:** Groups the filtered dataset (from Step 1) by `Department` to count the employees meeting the high satisfaction criteria.
+  - **Step 4:** Joins the total counts with the high satisfaction counts, then computes the percentage of employees in each department that meet the criteria.
+  - **Step 5:** Filters and retains only those departments where the computed percentage exceeds 50%.
+- **write_output:**  
+  - Writes the resulting DataFrame (containing `Department` and `Percentage`) to a CSV file.
+- **main:**  
+  - Orchestrates the workflow: initializing Spark, loading data, executing the task, writing the output, and finally stopping the Spark session.
+
+---
+
+## Task 2: Identify Employees Who Feel Valued but Didn’t Suggest Improvements
+
+**Script:** `src/task2_valued_no_suggestions.py`
+
+### Code Explanation:
+- **initialize_spark:**  
+  - Sets up and returns a SparkSession for running Spark operations.
+- **load_data:**  
+  - Loads the CSV data using a predefined schema, ensuring that columns like `EmployeeID`, `Department`, `JobTitle`, `SatisfactionRating`, etc., are read with the correct data types.
+- **identify_valued_no_suggestions:**  
+  - **Step 1:** Filters the dataset to select employees with a `SatisfactionRating` of 4 or higher, which are considered to feel valued.
+  - **Step 2:** Further filters this subset to retain only those employees who have not provided suggestions (`ProvidedSuggestions == False`).
+  - **Step 3:** Counts the number of these valued employees and calculates their proportion relative to the total number of employees.
+  - **Step 4:** Returns the count and proportion as a tuple.
+- **write_output:**  
+  - Writes the resulting count and proportion to a text file.
+- **main:**  
+  - Manages the overall process including Spark session initialization, data loading, task execution, output writing, and session shutdown.
+
+---
+
+## Task 3: Compare Engagement Levels Across Job Titles
+
+**Script:** `src/task3_compare_engagement_levels.py`
+
+### Code Explanation:
+- **initialize_spark:**  
+  - Creates and configures a SparkSession, which is necessary for Spark operations.
+- **load_data:**  
+  - Reads the employee CSV data using a predefined schema to ensure proper data type parsing.
+- **map_engagement_level:**  
+  - Maps the categorical `EngagementLevel` column to a new numerical column called `EngagementScore`. The mapping is defined as follows:
+    - `'Low'` → 1
+    - `'Medium'` → 2
+    - `'High'` → 3
+  - This new column enables numerical analysis of engagement.
+- **compare_engagement_levels:**  
+  - Groups the DataFrame by `JobTitle` and computes the average `EngagementScore` for each job title.
+  - The average is rounded to two decimal places to enhance readability.
+- **write_output:**  
+  - Saves the resulting DataFrame (with `JobTitle` and `AvgEngagementScore`) as a CSV file.
+- **main:**  
+  - Ties together the Spark session initialization, data loading, mapping of engagement levels, comparison by job title, output writing, and stopping the Spark session.
+
+---
+
+
 
