@@ -52,7 +52,7 @@ def identify_departments_high_satisfaction(df):
     joined_df = total_by_dept.join(high_sat_by_dept, on="Department", how="left").fillna(0)
     percentage_df = joined_df.withColumn("Percentage", spark_round((col("HighSatCount") / col("TotalEmployees")) * 100, 2))
     
-    # 5. Filter for departments with more than 10% of such employees and select desired columns
+    # 5. Filter for departments with more than 7.5% of such employees and select desired columns
     result_df = percentage_df.filter(col("Percentage") > 7.5).select("Department", "Percentage")
     
     return result_df
